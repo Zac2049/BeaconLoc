@@ -1,0 +1,20 @@
+beacon_localization:
+  default_beacon_height: 1.0
+  default_human_height: 1.7
+  filter_type: 'kalman'
+  kalman_filter:
+    dim_x: 6
+    dim_z: 3
+    measurement_noise: 0.1
+    process_noise: 0.01
+  median_window_size: 5
+  average_window_size: 5
+  rssi_to_distance:
+    tx_power: -55.0
+    path_loss_exponent: 3.306
+
+trilateration:
+  method: 'L-BFGS-B'
+
+position_update:
+  min_beacons: 3
