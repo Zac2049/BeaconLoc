@@ -89,19 +89,15 @@ class KalmanFilter:
         return self.kf.x[:3]
 
 
-
-
 def read_beacon_coords(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-    # 将内容解析为Python对象（列表或字典）
     data = json.loads(content)
     return data
 
 def read_beacon_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-    # 将内容解析为Python对象（列表或字典）
     data = json.loads(content)
     return data 
 
@@ -156,6 +152,9 @@ def process_beacon_data_for_strongthree(beacon_data):
 
 
 def process_beacon_data_for_pos(args):
+    '''
+    Main function to process beacon data and determine position
+    '''
     print(args.beacon_coords_file) 
     if not os.path.exists(args.beacon_coords_file):
         print(f"Error: Beacon coordinates file not found: {args.beacon_coords_file}")
@@ -194,50 +193,10 @@ def process_beacon_data_for_pos(args):
     
     return positions
 
-def simulate_real_time_processing(args):
-    beacon_coords_file = os.path.join('data', args.beacon_coords_file)
-    beacon_data_file = os.path.join('data', args.beacon_data_file)
-    
-    if not os.path.exists(beacon_coords_file):
-        print(f"Error: Beacon coordinates file not found: {beacon_coords_file}")
-        return
-    
-    if not os.path.exists(beacon_data_file):
-        print(f"Error: Beacon data file not found: {beacon_data_file}")
-        return
-
-    beacon_coords = read_beacon_coords(beacon_coords_file)
-    localization = BeaconLocalization(beacon_coords)
-    update_interval = 1.0 / args.update_frequency
-
-    last_processed_line = len(open(beacon_data_file, 'r').readlines())
-    while True:
-        with open(beacon_data_file, 'r') as file:
-            beacon_data = file.readlines()
-        
-        new_data = beacon_data[last_processed_line:]
-        if not new_data:
-            time.sleep(update_interval)
-            continue
-
-        for line in new_data:
-            beacon_group = json.loads(line)
-            strongest_uuids, signal_strengths = process_beacon_data_for_strongthree([beacon_group])
-            
-            position = localization.update_position(strongest_uuids, signal_strengths)
-            if position is not None:
-                print(f"Current position: x={position[0]:.2f}, y={position[1]:.2f}, z={position[2]:.2f}")
-            else:
-                print("Unable to determine position")
-
-            time.sleep(update_interval)
-        
-        last_processed_line = len(beacon_data)
-    
         
 def aggregate_continuous_points(coordinates, n):
     """
-    对每n个连续的坐标点进行聚合，并剔除离群点后得到统计代表点。
+    对每n个连续的坐标点进行聚合降频，并剔除离群点后得到统计代表点。
     
     coordinates: List of tuples/lists where each element is a (x, y) coordinate.
     n: Number of continuous points to group together.
@@ -279,7 +238,7 @@ def aggregate_continuous_points(coordinates, n):
 
 def aggregate_continuous_points_sliding(coordinates, n):
     """
-    对每个坐标点，使用前后n-1个点的窗口进行聚合，并剔除离群点后得到统计代表点。
+    对每个坐标点，使用前后n-1个点的窗口进行滤波，并剔除离群点后得到统计代表点。
     
     coordinates: List of tuples/lists where each element is a (x, y) coordinate.
     n: Window size, the number of points to consider around each point.
