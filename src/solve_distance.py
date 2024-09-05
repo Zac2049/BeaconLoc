@@ -114,7 +114,6 @@ class BeaconLocalization:
         initial_guess[2] = self.default_beacon_height
         bounds = [(None, None), (None, None), (0.9, 1.1)]
         result = minimize(error, initial_guess, args=(beacons,), method=self.config['trilateration']['method'], bounds=bounds)
-        # result = minimize(error, initial_guess, args=(beacons,), method=self.config['trilateration']['method'])
         return result.x
 
     def update_position(self, strongest_uuids, signal_strengths):

@@ -168,7 +168,7 @@ def process_beacon_data_for_pos(args):
     beacon_data = read_beacon_data(args.beacon_data_file)
     update_interval = 1.0 / args.update_frequency
 
-    print("beacon_data",beacon_data)
+    # print("beacon_data",beacon_data)
     localization = BeaconLocalization(beacon_coords)
 
     positions = []
