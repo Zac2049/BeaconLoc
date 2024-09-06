@@ -105,7 +105,7 @@ def load_config(config_file):
     with open(config_file, 'r') as file:
         return yaml.safe_load(file)
 
-def process_beacon_data_for_strongthree(beacon_data):
+def process_beacon_data_for_strongest(beacon_data, laterate_num):
     '''
     Process beacon data to find the three strongest signals.
     '''
@@ -144,7 +144,7 @@ def process_beacon_data_for_strongthree(beacon_data):
                         state[uuid].latest_time = timestamp
     
     latest_signals = {uuid: {'rssi': state[uuid].latest_rssi, 'time': state[uuid].latest_time} for uuid in state if state[uuid].latest_rssi is not None}
-    strongest_uuids = sorted(latest_signals, key=lambda x: latest_signals[x]['rssi'], reverse=True)[:3]
+    strongest_uuids = sorted(latest_signals, key=lambda x: latest_signals[x]['rssi'], reverse=True)[:laterate_num]
     signal_strengths = {uuid: data['rssi'] for uuid, data in latest_signals.items()}
     
     return strongest_uuids, signal_strengths
@@ -164,17 +164,20 @@ def process_beacon_data_for_pos(args):
         print(f"Error: Beacon data file not found: {args.beacon_data_file}")
         return
 
-    beacon_coords = read_beacon_coords(args.beacon_coords_file)
     beacon_data = read_beacon_data(args.beacon_data_file)
     update_interval = 1.0 / args.update_frequency
+    
+    config = load_config(args.config_file)
+
+    laterate_num = config['lateration']['laterate_num']
 
     # print("beacon_data",beacon_data)
-    localization = BeaconLocalization(beacon_coords)
+    localization = BeaconLocalization(args)
 
     positions = []
     
     for beacon_group in beacon_data:
-        strongest_uuids, signal_strengths = process_beacon_data_for_strongthree([beacon_group])
+        strongest_uuids, signal_strengths = process_beacon_data_for_strongest([beacon_group], laterate_num)
         if len(strongest_uuids) < 3:
             print("Error: At least 3 beacons are required to determine position")
             positions.append(None)

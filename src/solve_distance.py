@@ -68,9 +68,10 @@ class AveragePositionFilter(PositionFilter):
         return np.mean(self.positions, axis=0)
 
 class BeaconLocalization:
-    def __init__(self, beacon_coords, config_file='../config/beacon_config.yaml'):
-        self.beacon_coords = beacon_coords
-        self.config = self.load_config(config_file)
+    def __init__(self, args):
+        self.config_file = args.config_file 
+        self.beacon_coords = yaml.safe_load(open(args.beacon_coords_file, 'r'))
+        self.config = self.load_config(self.config_file)
         self.default_beacon_height = self.config['beacon_localization']['default_beacon_height']
         self.default_human_height = self.config['beacon_localization']['default_human_height']
         self.filter = self.initialize_filter()
@@ -113,11 +114,12 @@ class BeaconLocalization:
         initial_guess = np.mean(beacons, axis=0)[:3]
         initial_guess[2] = self.default_beacon_height
         bounds = [(None, None), (None, None), (0.9, 1.1)]
-        result = minimize(error, initial_guess, args=(beacons,), method=self.config['trilateration']['method'], bounds=bounds)
+        result = minimize(error, initial_guess, args=(beacons,), method=self.config['lateration']['method'], bounds=bounds)
         return result.x
 
     def update_position(self, strongest_uuids, signal_strengths):
         matched_beacons = self.match_beacons(strongest_uuids, signal_strengths)
+        print("matched_beacons",matched_beacons)
         if len(matched_beacons) < self.config['position_update']['min_beacons']:
             return None  # Not enough beacons for trilateration
 
@@ -127,19 +129,3 @@ class BeaconLocalization:
         filtered_position = self.filter.update(estimated_position)
 
         return filtered_position
-
-def solve_distance(beacon_coords, strongest_uuids, signal_strengths):
-    """
-    Solve the distance and determine the position based on beacon data.
-
-    Parameters:
-    beacon_coords (dict): A dictionary mapping beacon UUIDs to their (x, y) coordinates.
-    strongest_uuids (list): A list of UUIDs of the strongest detected beacons.
-    signal_strengths (dict): A dictionary mapping beacon UUIDs to their signal strengths (RSSI values).
-
-    Returns:
-    tuple or str: A tuple (x, y, z) representing the estimated position, or a string message if position cannot be determined.
-    """
-    localization = BeaconLocalization(beacon_coords)
-    position = localization.update_position(strongest_uuids, signal_strengths)
-    return position if position is not None else "Unable to determine position"

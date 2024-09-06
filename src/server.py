@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from utils.common import read_beacon_coords, process_beacon_data_for_strongthree
+from utils.common import process_beacon_data_for_strongest
 from src.solve_distance import BeaconLocalization
 
 app = Flask(__name__)
@@ -8,10 +8,9 @@ app = Flask(__name__)
 beacon_coords = None
 localization = None
 
-def init_app(beacon_coords_file):
+def init_app(args):
     global beacon_coords, localization
-    beacon_coords = read_beacon_coords(beacon_coords_file)
-    localization = BeaconLocalization(beacon_coords)
+    localization = BeaconLocalization(args)
 
 # state = BeaconState(window_size=5)
 @app.route('/upload_distance', methods=['POST'])
@@ -21,13 +20,13 @@ def real_time_processing():
         # Handle multiple beacon groups
         positions = []
         for beacon_group in data:
-            strongest_uuids, signal_strengths = process_beacon_data_for_strongthree([beacon_group])
+            strongest_uuids, signal_strengths = process_beacon_data_for_strongest([beacon_group])
             position = localization.update_position(strongest_uuids, signal_strengths)
             positions.append(position)
         return jsonify({'positions': positions})
     else:
         # Handle single beacon group
-        strongest_uuids, signal_strengths = process_beacon_data_for_strongthree([data])
+        strongest_uuids, signal_strengths = process_beacon_data_for_strongest([data])
         position = localization.update_position(strongest_uuids, signal_strengths)
         return jsonify({'position': position})
 
@@ -35,9 +34,11 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="Beacon Localization Server")
-    parser.add_argument("--beacon_coords_file", type=str, default="data/beacon_coords.txt", help="Path to the file containing beacon coordinates")
+    parser.add_argument("--beacon_coords_file", type=str, default="../data/beacon_coords.txt", help="Path to the file containing beacon coordinates")
+    parser.add_argument("--update_frequency", type=float, default=1.0, help="Update frequency in Hz")
+    parser.add_argument("--update_frequency", type=float, default=1.0, help="Update frequency in Hz") 
     parser.add_argument("--port", type=int, default=5000, help="Port to run the server on")
     args = parser.parse_args()
 
-    init_app(args.beacon_coords_file)
+    init_app(args)
     app.run(debug=True, host='0.0.0.0', port=args.port)
