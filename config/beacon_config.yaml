@@ -13,7 +13,8 @@ beacon_localization:
     tx_power: -55.0
     path_loss_exponent: 3.306
 
-trilateration:
+lateration:
+  laterate_num: 3
   method: 'L-BFGS-B'
 
 position_update:
