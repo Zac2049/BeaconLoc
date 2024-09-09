@@ -164,7 +164,7 @@ cython_debug/
 
 .ipynb_checkpoints
 
-# datas/
+datas/
 
-notebooks*/
+# notebooks*/
 
